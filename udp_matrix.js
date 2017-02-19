@@ -215,11 +215,11 @@ var client = PixelVloedClient;
 
 
 // canvas 
-var canvasWidth = 64/1 // width
+var canvasWidth = 128/1 // width
 var canvasHeight = 32/1 // height
 
-var blockWidth = 1366/64
-var blockHeight = 786/32
+var blockWidth = 1366/canvasWidth
+var blockHeight = 786/canvasHeight
 
 function randomChar() {
     //33 - 126
@@ -250,6 +250,51 @@ function PushSquare(x,y,w,h,r,g,b,a){
 }
 
 
+var Canvas = require('canvas')
+
+function PushChar(x,y,w,h,r,g,b,a){
+  w = Math.floor(w)
+  h = Math.floor(h)
+  canvas = new Canvas(w, h)
+  ctx = canvas.getContext('2d')
+  var Image = Canvas.Image
+  ctx.font = 'bold 25px sans-serif';
+  // console.log(w,h)
+  // ctx.fillStyle = '#000000'
+  // ctx.lineWidth = 4;
+  // ctx.strokeStyle='#FFF'
+  // ctx.strokeText('O', w, h);
+  ctx.globalAlpha = 1
+  ctx.fillStyle='#FFFFFF'
+  // ctx.fillText(randomChar(), 0,0,w);
+  ctx.fillText('X',10,10,w);
+  var imgd = ctx.getImageData(0, 0, w, h);
+  var pix = imgd.data;
+  // console.log(ctx.measureText('X'))
+  var col = 0
+  var row = 0
+  // console.log('pix.length',pix.length)
+  for (var i = 0, n = pix.length; i < n; i += 4) {
+
+    var r = pix[i]
+    var g = pix[i + 1]
+    var b = pix[i + 2]
+    var a = pix[i + 3]
+
+    if (r+g+b+a > 1) {
+      PushPixel(x+col,y+row,r,g,b,a)
+    }
+
+    // PushPixel(x+col,y+row,255,255,255,255)
+    // console.log(col,row)
+    col++
+    if(col>=w){
+      row++
+      col=0
+    }
+  }  
+}
+
 function PushPixel(x,y,r,g,b,a){
     if (!_msg) _msg = NewMessage(1)
 
@@ -265,7 +310,7 @@ function PushPixel(x,y,r,g,b,a){
     _msg.writeUInt8(a, offset+7);
 
     _pixelcount++
-    if (_pixelcount > 20 ) {
+    if (_pixelcount > MAX_PIXELS-1 ) {
         PushPackage()
     }
 }
@@ -308,16 +353,16 @@ RenderLoop = function(width,height) {
             var changingTailColor = colorTail;
 
             // background only
-            // if (y === heads[col])                   PushPixel(x,y,colorHead.r,colorHead.g,colorHead.b,colorHead.a)
             if (y === heads[col])                   PushSquare(x*blockWidth,y*blockHeight,blockWidth,blockHeight,colorHead.r,colorHead.g,colorHead.b,colorHead.a)
             if (y === heads[col] -1)                PushSquare(x*blockWidth,y*blockHeight,blockWidth,blockHeight,colorTail.r,colorTail.g,colorTail.b,colorTail.a)
             if (y === heads[col] - tails[col] -1 )  PushSquare(x*blockWidth,y*blockHeight,blockWidth,blockHeight,0,0,0,255)
+
             // text only
-            // if (y === heads[col]) client.write('TX ' + x + ' ' + y + ' ' + randomChar() + ' ' + colorHead + '\n');
-            // if (y === heads[col] -1) client.write('TX ' + x + ' ' + y + '  ' + changingTailColor + '\n');
-            // if (y === heads[col] - tails[col] -1 ) client.write('TX ' + x + ' ' + y + ' false\n');
+            // if (y === heads[col])                   PushChar(x*blockWidth,y*blockHeight,blockWidth,blockHeight,colorHead.r,colorHead.g,colorHead.b,colorHead.a)
+            // if (y === heads[col] -1)                PushChar(x*blockWidth,y*blockHeight,blockWidth,blockHeight,colorTail.r,colorTail.g,colorTail.b,colorTail.a)
+            // if (y === heads[col] - tails[col] -1 )  PushChar(x*blockWidth,y*blockHeight,blockWidth,blockHeight,0,0,0,255)
 
-
+            // PushChar(50,50,50,50,255,255,255,255)
         }
     }
     return NewMessage(1)
